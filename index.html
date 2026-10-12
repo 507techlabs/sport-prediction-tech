@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sport Prediction Tech</title>
+<style>
+  :root{
+    --bg:#0e1116; --card:#171c24; --card2:#1e2530; --txt:#e8edf3; --mut:#8b97a7;
+    --acc:#3ddc97; --away:#5aa9ff; --draw:#9aa4b2; --bad:#ff6b6b; --line:#262e3a;
+  }
+  *{box-sizing:border-box}
+  html{min-height:100%;background:#05070b} body{min-height:100vh;margin:0;background:transparent;color:var(--txt);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  body > :not(#bg){position:relative;z-index:1}
+  header{padding:20px 16px 8px;max-width:1100px;margin:0 auto}
+  h1{margin:0;display:flex;align-items:center;gap:12px;font-size:clamp(30px,4.5vw,42px);line-height:1.08;letter-spacing:-.035em;font-weight:850;flex-wrap:nowrap}
+  h1 span{color:var(--acc)}
+  .brand-chart{width:clamp(38px,5vw,52px);height:clamp(38px,5vw,52px);flex:0 0 auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
+  .brand-name{color:var(--txt);white-space:nowrap}
+  .brand-name .brand-accent{color:var(--acc)}
+  @media(max-width:480px){header{padding-top:18px}h1{font-size:clamp(24px,6.2vw,30px);gap:8px;letter-spacing:-.025em}.brand-chart{width:34px;height:34px}}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  main{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+  .tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 0}
+  .tab{background:var(--card);border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;font-size:15px}
+  .tab.on{background:var(--acc);color:#07140d;border-color:var(--acc);font-weight:700}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--mut);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  .chip.on{border-color:var(--acc);color:var(--acc)}
+  .bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+  .bar button,.bar input{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+  .bar button{cursor:pointer}
+  .score{margin-left:auto;color:var(--mut);font-size:13px}
+  .score b{color:var(--acc)}
+  .lg{margin:22px 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:8px}
+  .lg::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+  .g{background:rgba(18,23,31,.80);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .top{display:flex;justify-content:space-between;color:var(--mut);font-size:12px;margin-bottom:10px}
+  .live{color:var(--bad);font-weight:700}
+  .t{display:flex;align-items:center;gap:10px;padding:5px 0}
+  .t img{width:28px;height:28px;object-fit:contain}
+  .t .ph{width:28px;height:28px;border-radius:50%;background:var(--card2)}
+  .t .n{flex:1;min-width:0}
+  .t .n div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t .r{color:var(--mut);font-size:12px}
+  .t .s{font-size:20px;font-weight:700;min-width:28px;text-align:right}
+  .t.w .n div:first-child{font-weight:700}
+  .prob{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:12px 0 6px;background:var(--card2)}
+  .prob i{display:block;height:100%}
+  .pl{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+  .pick{margin-top:10px;padding:8px 10px;background:var(--card2);border-radius:8px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .pick b{color:var(--acc)}
+  .pick.na{border:1px dashed var(--line);color:var(--mut)}
+  .pick.na b{color:var(--mut)}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+  .tag.ok{color:var(--acc);border-color:var(--acc)}
+  .tag.no{color:var(--bad);border-color:var(--bad)}
+  .odds{font-size:11px;color:var(--mut);margin-top:6px}
+  .msg{color:var(--mut);text-align:center;padding:40px 10px}
+  footer{max-width:1100px;margin:0 auto;padding:0 16px 40px;color:var(--mut);font-size:12px}
+  /* Fondo de estadios */
+  #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#05070b;pointer-events:none}
+  #bg .f{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;
+      transition:opacity 1s ease;transform:scale(1.04)}
+  #bg .f.on{opacity:1;animation:zoom 30s ease-in-out infinite alternate}
+  #bg::after{content:"";position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(8,11,16,.62) 0%,rgba(8,11,16,.36) 38%,rgba(8,11,16,.72) 100%)}
+  @keyframes zoom{from{transform:scale(1.04) translate3d(0,0,0)}to{transform:scale(1.13) translate3d(-1.2%,-.8%,0)}}
+  @media (prefers-reduced-motion:reduce){#bg .f.on{animation:none}}
+  header h1,.sub{text-shadow:0 2px 12px rgba(0,0,0,.75)}
+  .sub{color:#c6cfdb}
+  /* Espacio publicitario (AdSense) */
+  .adwrap{max-width:1100px;margin:6px auto 2px;padding:0 16px}
+  .ad{width:100%;min-height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+      border:1px dashed rgba(255,255,255,.3);border-radius:12px;background:rgba(18,23,31,.55);
+      backdrop-filter:blur(4px);color:var(--mut);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+  .ad.live{border:0;background:transparent;backdrop-filter:none;display:block}
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true"></div>
+<header>
+  <h1 aria-label="Sport Prediction Tech">
+    <svg class="brand-chart" viewBox="0 0 48 48" role="img" aria-label="Gráfica bursátil con tendencia al alza" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="chartBars" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2587d8"/><stop offset="1" stop-color="#62c4ff"/></linearGradient></defs>
+      <path d="M5 41H44" stroke="#aab6c6" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+      <rect x="7" y="27" width="7" height="14" rx="1.5" fill="url(#chartBars)"/>
+      <rect x="18" y="21" width="7" height="20" rx="1.5" fill="url(#chartBars)"/>
+      <rect x="29" y="13" width="7" height="28" rx="1.5" fill="url(#chartBars)"/>
+      <path d="M6 23L17 17L25 19L39 6" fill="none" stroke="#3ddc97" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M31 6H39V14" fill="none" stroke="#3ddc97" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="brand-name">Sport Prediction <span class="brand-accent">Tech</span></span>
+  </h1>
+  <div class="sub">Fútbol · Béisbol · Baloncesto · Fútbol Americano — probabilidades de victoria, gratis.</div>
+</header>
+<div class="adwrap">
+  <div class="ad" id="adSlot"><span>Espacio publicitario</span></div>
+</div>
+<main>
+  <div class="tabs" id="tabs"></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar">
+    <button id="prev">◀</button>
+    <input type="date" id="date">
+    <button id="next">▶</button>
+    <button id="today">Hoy</button>
+    <div class="score" id="score"></div>
+  </div>
+  <div id="out"></div>
+</main>
+<footer>
+  Pronósticos actuales estimados a partir del récord disponible de la temporada y la ventaja de local. No utilizamos cuotas ni volumen de apuestas para decidir el pronóstico.
+  Son estimaciones informativas, no garantías. Fuente principal del calendario: ESPN; sus endpoints públicos no son una API oficial garantizada.
+</footer>
+
+<script>
+const SPORTS = [
+  { id:'futbol', name:'⚽ Fútbol', soccer:true, hfa:0.3, range:1, leagues:[
+    {n:'Premier League', p:'soccer/eng.1'},
+    {n:'LaLiga', p:'soccer/esp.1'},
+    {n:'Serie A', p:'soccer/ita.1'},
+    {n:'Bundesliga', p:'soccer/ger.1'},
+    {n:'Ligue 1', p:'soccer/fra.1'},
+    {n:'MLS', p:'soccer/usa.1'},
+    {n:'Liga MX', p:'soccer/mex.1'},
+    {n:'Champions League', p:'soccer/uefa.champions'},
+    {n:'Europa League', p:'soccer/uefa.europa'},
+    {n:'Copa Libertadores', p:'soccer/conmebol.libertadores'},
+    {n:'Copa Sudamericana', p:'soccer/conmebol.sudamericana'},
+    {n:'Liga Argentina', p:'soccer/arg.1'},
+    {n:'Brasileirão', p:'soccer/bra.1'},
+    {n:'Eredivisie', p:'soccer/ned.1'},
+    {n:'Liga Portugal', p:'soccer/por.1'},
+  ]},
+  { id:'beisbol', name:'⚾ Béisbol', hfa:0.15, range:1, leagues:[
+    {n:'MLB', p:'baseball/mlb'},
+  ]},
+  { id:'basket', name:'🏀 Baloncesto', hfa:0.3, range:1, leagues:[
+    {n:'NBA', p:'basketball/nba', h:0.3},
+    {n:'WNBA', p:'basketball/wnba', h:0.3},
+    {n:'NCAA Masculino', p:'basketball/mens-college-basketball', q:'&groups=50', h:0.45},
+    {n:'NCAA Femenino', p:'basketball/womens-college-basketball', q:'&groups=50', h:0.45},
+  ]},
+  { id:'nfl', name:'🏈 Fútbol Americano', hfa:0.25, range:7, leagues:[
+    {n:'NFL', p:'football/nfl', h:0.25},
+    {n:'NCAA Football (FBS)', p:'football/college-football', q:'&groups=80', h:0.35},
+  ]},
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+const inputVal = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const sigmoid = x => 1/(1+Math.exp(-x));
+const logit = p => Math.log(p/(1-p));
+const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+
+let state = { sport: SPORTS[0], league: 'all', date: new Date() };
+state.date.setHours(12,0,0,0);
+const cache = new Map();
+let reqId = 0;
+
+/* ---------- Fondo de estadio por deporte ---------- */
+const BG = {
+  futbol:  'fondo-futbol.webp',
+  beisbol: 'fondo-beisbol.webp',
+  basket:  'fondo-baloncesto.webp',
+  nfl:     'fondo-futbol-americano.webp',
+};
+/* Si una foto no carga, se ve este degradado en su lugar */
+const GRAD = {
+  futbol:  'linear-gradient(180deg,#0a1630 0%,#0c3b22 100%)',
+  beisbol: 'linear-gradient(180deg,#0a1630 0%,#4a2a18 100%)',
+  basket:  'linear-gradient(180deg,#0a1630 0%,#6a3a12 100%)',
+  nfl:     'linear-gradient(180deg,#0a1630 0%,#0d3a24 100%)',
+};
+function initBg(){
+  $('bg').innerHTML = SPORTS.map(s => `<div class="f" data-s="${s.id}"></div>`).join('');
+  document.querySelectorAll('#bg .f').forEach(f => { f.style.backgroundImage = `url("${BG[f.dataset.s]}"), ${GRAD[f.dataset.s]}`; });
+}
+function setBg(id){
+  document.querySelectorAll('#bg .f').forEach(f => f.classList.toggle('on', f.dataset.s === id));
+}
+
+/* ---------- Google AdSense ----------
+   Cuando tengas la cuenta aprobada, rellena estas dos líneas y listo:
+   client -> tu ID de editor, ej. 'ca-pub-1234567890123456'
+   slot   -> el ID del bloque de anuncios, ej. '1234567890'
+   Mientras estén vacías se muestra el recuadro "Espacio publicitario". */
+const ADSENSE = { client: '', slot: '' };
+function initAd(){
+  const box = $('adSlot');
+  if (!box || !ADSENSE.client || !ADSENSE.slot) return;
+  box.classList.add('live');
+  box.innerHTML = `<ins class="adsbygoogle" style="display:block" data-ad-client="${esc(ADSENSE.client)}" data-ad-slot="${esc(ADSENSE.slot)}" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
+  const sc = document.createElement('script');
+  sc.async = true; sc.crossOrigin = 'anonymous';
+  sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADSENSE.client);
+  sc.onload = () => { try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){} };
+  document.head.appendChild(sc);
+}
+
+/* ---------- UI ---------- */
+function drawTabs(){
+  $('tabs').innerHTML = SPORTS.map(s =>
+    `<button class="tab ${s===state.sport?'on':''}" data-id="${s.id}">${s.name}</button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => {
+    state.sport = SPORTS.find(s => s.id === b.dataset.id);
+    state.league = 'all';
+    setBg(state.sport.id);
+    drawTabs(); drawChips(); load();
+  });
+}
+function drawChips(){
+  const ls = state.sport.leagues;
+  if (ls.length < 2){ $('chips').innerHTML = ''; return; }
+  $('chips').innerHTML =
+    `<button class="chip ${state.league==='all'?'on':''}" data-l="all">Todas las ligas</button>` +
+    ls.map(l => `<button class="chip ${state.league===l.p?'on':''}" data-l="${l.p}">${esc(l.n)}</button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    state.league = b.dataset.l; drawChips(); load();
+  });
+}
+function setDate(d){ d.setHours(12,0,0,0); state.date = d; $('date').value = inputVal(d); load(); }
+$('prev').onclick = () => { const d = new Date(state.date); d.setDate(d.getDate() - state.sport.range); setDate(d); };
+$('next').onclick = () => { const d = new Date(state.date); d.setDate(d.getDate() + state.sport.range); setDate(d); };
+$('today').onclick = () => setDate(new Date());
+$('date').onchange = e => { if (e.target.value){ const [y,m,dd] = e.target.value.split('-').map(Number); setDate(new Date(y,m-1,dd)); } };
+
+/* ---------- Datos ---------- */
+async function fetchJson(url){
+  if (cache.has(url) && Date.now() - cache.get(url).t < 60000) return cache.get(url).v;
+  const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  cache.set(url, { t: Date.now(), v: j });
+  return j;
+}
+function eventsFrom(j, lg){ return (j.events || []).map(ev => ({ ev, lg })); }
+function nflRegularWeek(d){
+  // Semana regular aproximada: la semana 1 comienza el jueves posterior al Labor Day.
+  const y=d.getFullYear();
+  const sep1=new Date(y,8,1,12,0,0,0);
+  const firstMonday=new Date(sep1); firstMonday.setDate(sep1.getDate()+((8-sep1.getDay())%7));
+  const laborDay=new Date(firstMonday); // primer lunes de septiembre
+  const firstThursday=new Date(laborDay); firstThursday.setDate(laborDay.getDate()+3);
+  return Math.max(1,Math.min(18,Math.floor((d-firstThursday)/(7*86400000))+1));
+}
+function parseCsvLine(line){
+  const out=[]; let cur='', quoted=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"' && quoted && line[i+1]==='"'){cur+='"';i++;}
+    else if(ch==='"') quoted=!quoted;
+    else if(ch===',' && !quoted){out.push(cur);cur='';}
+    else cur+=ch;
+  }
+  out.push(cur); return out;
+}
+async function fetchNflverseSchedule(start,end,lg){
+  // Fuente alternativa gratuita: calendario abierto de nflverse. Se usa solo si ESPN no entrega calendario.
+  const url='https://cdn.jsdelivr.net/gh/nflverse/nfldata@master/data/games.csv';
+  const key='nflverse-games-csv';
+  let csv;
+  if(cache.has(key) && Date.now()-cache.get(key).t<6*60*60*1000) csv=cache.get(key).v;
+  else {
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('nflverse HTTP '+r.status);
+    csv=await r.text(); cache.set(key,{t:Date.now(),v:csv});
+  }
+  const lines=csv.split(/\r?\n/).filter(Boolean);
+  if(lines.length<2) return [];
+  const headers=parseCsvLine(lines[0]);
+  const idx=Object.fromEntries(headers.map((h,i)=>[h,i]));
+  const required=['gameday','gametime','away_team','home_team','season','game_type'];
+  if(required.some(k=>idx[k]===undefined)) throw new Error('Formato de calendario nflverse no reconocido');
+  const endExclusive=new Date(end.getFullYear(),end.getMonth(),end.getDate()+1,0,0,0,0);
+  const teamNames={ARI:'Arizona Cardinals',ATL:'Atlanta Falcons',BAL:'Baltimore Ravens',BUF:'Buffalo Bills',CAR:'Carolina Panthers',CHI:'Chicago Bears',CIN:'Cincinnati Bengals',CLE:'Cleveland Browns',DAL:'Dallas Cowboys',DEN:'Denver Broncos',DET:'Detroit Lions',GB:'Green Bay Packers',HOU:'Houston Texans',IND:'Indianapolis Colts',JAX:'Jacksonville Jaguars',KC:'Kansas City Chiefs',LV:'Las Vegas Raiders',LAC:'Los Angeles Chargers',LAR:'Los Angeles Rams',MIA:'Miami Dolphins',MIN:'Minnesota Vikings',NE:'New England Patriots',NO:'New Orleans Saints',NYG:'New York Giants',NYJ:'New York Jets',PHI:'Philadelphia Eagles',PIT:'Pittsburgh Steelers',SF:'San Francisco 49ers',SEA:'Seattle Seahawks',TB:'Tampa Bay Buccaneers',TEN:'Tennessee Titans',WAS:'Washington Commanders'};
+  const results=[];
+  for(let n=1;n<lines.length;n++){
+    const row=parseCsvLine(lines[n]);
+    const get=k=>row[idx[k]]||'';
+    const day=get('gameday');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    const localDay=new Date(day+'T12:00:00');
+    if(localDay<new Date(start.getFullYear(),start.getMonth(),start.getDate(),0,0,0,0)||localDay>=endExclusive) continue;
+    if(String(get('season'))!==String(start.getFullYear())) continue;
+    if(!['REG','POST','WC','DIV','CON','SB'].includes(String(get('game_type')).toUpperCase())) continue;
+    const awayCode=get('away_team'), homeCode=get('home_team');
+    if(!awayCode||!homeCode) continue;
+    const time=get('gametime')||'13:00';
+    // nflverse gametime is Eastern; convert with an explicit Eastern offset for the 2026 season dates.
+    const offset=(localDay.getMonth()>=2 && localDay.getMonth()<=10)?'-04:00':'-05:00';
+    const dt=new Date(`${day}T${time}:00${offset}`);
+    const id=get('game_id')||`nflverse-${day}-${awayCode}-${homeCode}`;
+    const ev={id,date:dt.toISOString(),name:`${teamNames[awayCode]||awayCode} at ${teamNames[homeCode]||homeCode}`,status:{type:{state:'pre',detail:'Programado'}},competitions:[{neutralSite:false,competitors:[
+      {homeAway:'away',team:{name:teamNames[awayCode]||awayCode,displayName:teamNames[awayCode]||awayCode,shortDisplayName:awayCode,abbreviation:awayCode},records:[]},
+      {homeAway:'home',team:{name:teamNames[homeCode]||homeCode,displayName:teamNames[homeCode]||homeCode,shortDisplayName:homeCode,abbreviation:homeCode},records:[]}
+    ]}]};
+    results.push({ev,lg});
+  }
+  return results;
+}
+
+async function fetchLeague(sport, lg){
+  const start = new Date(state.date); start.setHours(12,0,0,0);
+  const end = new Date(start); end.setDate(end.getDate() + sport.range - 1);
+  const dates = sport.range > 1 ? `${ymd(start)}-${ymd(end)}` : ymd(start);
+  const base = `https://site.api.espn.com/apis/site/v2/sports/${lg.p}/scoreboard`;
+  const url = `${base}?dates=${dates}&limit=300${lg.q||''}`;
+  let firstError = null;
+  try {
+    const j = await fetchJson(url);
+    const v = eventsFrom(j, lg);
+    if (v.length || sport.id !== 'nfl') return v;
+  } catch(e) { firstError = e; }
+
+  // NFL fallback 1: query each local calendar date independently; range queries can be incomplete.
+  if (sport.id === 'nfl'){
+    const dayDates=[];
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dayDates.push(ymd(d));
+    const daily = await Promise.allSettled(dayDates.map(async day => {
+      const j=await fetchJson(`${base}?dates=${day}&limit=100${lg.q||''}`);
+      return eventsFrom(j,lg);
+    }));
+    const merged=new Map();
+    daily.forEach(r=>{ if(r.status==='fulfilled') r.value.forEach(item=>merged.set(item.ev.id,item)); });
+    if(merged.size) return [...merged.values()];
+
+    // NFL fallback 2: week + season endpoint. The weekly response is filtered back to the chosen date window.
+    try {
+      const week=nflRegularWeek(start);
+      const season=start.getMonth()>=8 ? start.getFullYear() : start.getFullYear();
+      const j=await fetchJson(`${base}?week=${week}&seasontype=2&season=${season}&limit=100${lg.q||''}`);
+      const all=eventsFrom(j,lg);
+      const filtered=all.filter(item=>{
+        const dt=new Date(item.ev.date); return dt>=start && dt<new Date(end.getFullYear(),end.getMonth(),end.getDate()+1,0,0,0,0);
+      });
+      if(filtered.length) return filtered;
+    } catch(e) { if(!firstError) firstError=e; }
+  }
+  if(sport.id==='nfl'){
+    try {
+      const fallback=await fetchNflverseSchedule(start,end,lg);
+      if(fallback.length) return fallback;
+    } catch(e) { if(!firstError) firstError=e; }
+  }
+  if(firstError) throw firstError;
+  return [];
+}
+
+/* ---------- Modelo de predicción ---------- */
+function parseRecord(c){
+  const r = (c.records || []).find(x => x.type === 'total') || (c.records || [])[0];
+  if (!r || !r.summary) return null;
+  const n = r.summary.split('-').map(Number);
+  if (n.some(isNaN)) return null;
+  return { text: r.summary, n };
+}
+function predict(sport, lg, comp, home, away){
+  const rh = parseRecord(home), ra = parseRecord(away);
+  const hfa = comp.neutralSite ? 0 : (lg.h ?? sport.hfa);
+  // Pronóstico sencillo: récord de temporada y ventaja de local. Nunca usa cuotas de apuestas.
+  if (!rh || !ra) return null;
+
+  if (sport.soccer){
+    const ppg = r => {
+      const [w,d,l] = r.n.length === 3 ? r.n : [r.n[0], 0, r.n[1]];
+      const g = w+d+l;
+      if (!g || !Number.isFinite(g)) return null;
+      return (3*w + d) / g;
+    };
+    const phg = ppg(rh), pag = ppg(ra);
+    if (phg === null || pag === null) return null;
+    const diff = phg - pag;
+    const draw = clamp(0.29 - 0.035*Math.abs(diff), 0.18, 0.31);
+    const ph = (1-draw) * sigmoid(0.65*diff + hfa);
+    return { h: ph, d: draw, a: 1 - draw - ph, src: 'Récord actual + localía' };
+  }
+
+  const wp = r => {
+    const w = r.n[0], l = r.n[1], t = r.n[2] || 0;
+    const g = w + l + t;
+    if (!g || !Number.isFinite(g)) return null;
+    return clamp((w + 0.5*t) / g, 0.05, 0.95);
+  };
+  const wh = wp(rh), wa = wp(ra);
+  if (wh === null || wa === null) return null;
+  const p = sigmoid(logit(wh) - logit(wa) + hfa);
+  if (!Number.isFinite(p)) return null;
+  return { h: p, d: 0, a: 1-p, src: 'Récord actual + localía' };
+}
+
+/* ---------- Render ---------- */
+function teamRow(c, side, pr){
+  const t = c.team || {};
+  const rec = parseRecord(c);
+  const logo = t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : `<div class="ph"></div>`;
+  const win = c.winner === true;
+  const score = (pr.state === 'post') ? `<div class="s">${esc(c.score ?? '')}</div>` : '';
+  return `<div class="t ${win?'w':''}">${logo}
+    <div class="n"><div>${esc(t.displayName || t.name || '—')}</div>
+    <div class="r">${side==='home'?'Local':'Visitante'}${rec ? ' · Récord actual ' + esc(rec.text) : ''}</div></div>${score}</div>`;
+}
+
+function card(item, sport){
+  const { ev, lg } = item;
+  const comp = (ev.competitions || [])[0];
+  if (!comp) return null;
+  const cs = comp.competitors || [];
+  const home = cs.find(c => c.homeAway === 'home') || cs[0];
+  const away = cs.find(c => c.homeAway === 'away') || cs[1];
+  if (!home || !away) return null;
+
+  const st = ev.status?.type || {};
+  const stateName = st.state || 'pre';
+  // No mostramos partidos en juego; el foco del sitio son los pronósticos previos.
+  if (ev.status?.type?.state === 'in') return null;
+  const p = predict(sport, lg, comp, home, away);
+
+  const hp = p ? Math.round(p.h*100) : 0, dp = p ? Math.round(p.d*100) : 0, ap = p ? 100 - hp - dp : 0;
+  const hn = home.team?.shortDisplayName || home.team?.displayName || 'Local';
+  const an = away.team?.shortDisplayName || away.team?.displayName || 'Visitante';
+
+  let pickKey = null, pickName = 'No disponible', pickPct = null, conf = 'Faltan datos actuales';
+  if (p){
+    pickKey = 'h'; let best = p.h;
+    if (p.a > best){ pickKey = 'a'; best = p.a; }
+    if (p.d > best){ pickKey = 'd'; best = p.d; }
+    pickName = pickKey === 'h' ? hn : pickKey === 'a' ? an : 'Empate';
+    pickPct = Math.round(best*100);
+    conf = pickPct >= 70 ? 'Probabilidad estimada alta' : pickPct >= 58 ? 'Probabilidad estimada media' : 'Partido parejo';
+  }
+
+  let tag = '', hit = null;
+  // No mostramos etiquetas de acierto/fallo: el objetivo es el pronóstico actual previo al partido.
+
+  const when = new Date(ev.date);
+  let status;
+  if (stateName === 'post') status = `Final${st.detail && /OT|Pen|ET/i.test(st.detail) ? ' · ' + esc(st.detail) : ''}`;
+  else status = when.toLocaleString('es-PA', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+  const oddsLine = ''; // No mostramos ni usamos cuotas de apuestas.
+
+  const html = `<div class="g">
+    <div class="top"><span>${esc(lg.n)}</span><span>${status}</span></div>
+    ${teamRow(home,'home',{state:stateName})}
+    ${teamRow(away,'away',{state:stateName})}
+    ${p ? `<div class="prob">
+      <i style="width:${hp}%;background:var(--acc)"></i>
+      ${p.d ? `<i style="width:${dp}%;background:var(--draw)"></i>` : ''}
+      <i style="width:${ap}%;background:var(--away)"></i>
+    </div>
+    <div class="pl"><span>${esc(hn)} ${hp}%</span>${p.d ? `<span>Empate ${dp}%</span>` : ''}<span>${esc(an)} ${ap}%</span></div>
+    <div class="pick"><span>Pronóstico actual estimado: <b>${esc(pickName)}</b> (${pickPct}%) · ${conf}</span>${tag}</div>` : `<div class="pick na"><span><b>Pronóstico no disponible</b> · La fuente no entregó datos actuales suficientes para estimar este partido.</span></div>`}
+    ${oddsLine}
+  </div>`;
+  return { html, date: when, hit, state: stateName };
+}
+
+async function load(){
+  const my = ++reqId;
+  const sport = state.sport;
+  $('date').value = inputVal(state.date);
+  $('score').textContent = '';
+  $('out').innerHTML = '<div class="msg">Cargando partidos…</div>';
+
+  const leagues = state.league === 'all' ? sport.leagues : sport.leagues.filter(l => l.p === state.league);
+  const results = await Promise.allSettled(leagues.map(l => fetchLeague(sport, l)));
+  if (my !== reqId) return;
+
+  let html = '', total = 0, hits = 0, done = 0, errors = 0, firstErr = '';
+  results.forEach((r, i) => {
+    if (r.status === 'rejected'){ errors++; if (!firstErr) firstErr = String(r.reason && r.reason.message || r.reason); return; }
+    const cards = r.value.map(it => card(it, sport)).filter(Boolean).sort((a,b) => a.date - b.date);
+    if (!cards.length) return;
+    total += cards.length;
+    cards.forEach(c => { if (c.hit !== null){ done++; if (c.hit) hits++; } });
+    html += `<div class="lg">${esc(leagues[i].n)} · ${cards.length}</div><div class="grid">${cards.map(c => c.html).join('')}</div>`;
+  });
+
+  if (!total){
+    html = errors === leagues.length
+      ? `<div class="msg">No se pudieron cargar los datos de ESPN.<br>Detalle técnico: <code>${esc(firstErr)}</code><br><br>
+          Si estás viendo esta página dentro de una vista previa (chat, editor), ábrela directo en tu navegador
+          (Chrome, Safari…) o publícala; las vistas previas suelen bloquear conexiones externas.</div>`
+      : '<div class="msg">La fuente no devolvió partidos para esta fecha. Prueba con otro día o una competición distinta.</div>';
+  } else if (errors){
+    html += `<div class="msg">Algunas ligas no cargaron (${errors}).</div>`;
+  }
+  $('out').innerHTML = html;
+  $('score').textContent = total ? `${total} partidos disponibles` : '';
+}
+
+initBg(); setBg(state.sport.id); initAd();
+drawTabs(); drawChips(); $('date').value = inputVal(state.date); load();
+// No se actualiza automáticamente: la página se centra en consultar partidos y pronósticos previos al encuentro.
+</script>
+</body>
+</html>
