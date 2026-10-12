@@ -25,8 +25,11 @@
   .tab{background:var(--card);border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;font-size:15px}
   .tab.on{background:var(--acc);color:#07140d;border-color:var(--acc);font-weight:700}
   .chips{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px}
-  .chip{background:transparent;border:1px solid var(--line);color:var(--mut);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
-  .chip.on{border-color:var(--acc);color:var(--acc)}
+  
+.chip{background:rgba(5,10,18,.88);border:1px solid #e6ff00;color:#f2ff75;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;text-shadow:0 1px 3px #000;transition:background .2s ease,color .2s ease,border-color .2s ease}
+.chip:hover{background:rgba(230,255,0,.18);border-color:#f5ff00;color:#fff}
+.chip.on{background:#39ff14;border-color:#39ff14;color:#061006;font-weight:800;text-shadow:none}
+
   .bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
   .bar button,.bar input{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
   .bar button{cursor:pointer}
