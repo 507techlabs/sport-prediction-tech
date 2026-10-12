@@ -25,6 +25,13 @@
   .tab{background:var(--card);border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;font-size:15px}
   .tab.on{background:var(--acc);color:#07140d;border-color:var(--acc);font-weight:700}
   .chips{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px}
+  .league-panel{margin:0 0 8px;border:1px solid var(--line);border-radius:10px;background:rgba(5,10,18,.72);overflow:hidden}
+  .league-panel>summary{list-style:none;cursor:pointer;padding:11px 14px;color:#f2ff75;font-weight:700;font-size:14px}
+  .league-panel>summary::-webkit-details-marker{display:none}
+  .league-panel>summary::after{content:" ▾";float:right;color:#39ff14}
+  .league-panel[open]>summary{border-bottom:1px solid var(--line)}
+  .league-panel[open]>summary::after{content:" ▴"}
+  .league-panel .chips{padding:10px}
   
 .chip{background:rgba(5,10,18,.88);border:1px solid #e6ff00;color:#f2ff75;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;text-shadow:0 1px 3px #000;transition:background .2s ease,color .2s ease,border-color .2s ease}
 .chip:hover{background:rgba(230,255,0,.18);border-color:#f5ff00;color:#fff}
@@ -103,7 +110,10 @@
 </div>
 <main>
   <div class="tabs" id="tabs"></div>
-  <div class="chips" id="chips"></div>
+  <details class="league-panel" id="leaguePanel">
+    <summary id="leagueSummary">Ligas y competiciones · Todas las ligas</summary>
+    <div class="chips" id="chips"></div>
+  </details>
   <div class="bar">
     <button id="prev">◀</button>
     <input type="date" id="date">
@@ -116,6 +126,7 @@
 <footer>
   Pronósticos actuales estimados a partir del récord disponible de la temporada y la ventaja de local. No utilizamos cuotas ni volumen de apuestas para decidir el pronóstico.
   Son estimaciones informativas, no garantías. Fuente principal del calendario: ESPN; sus endpoints públicos no son una API oficial garantizada.
+  <div style="margin-top:8px;text-align:center;letter-spacing:.04em">507TechLabs</div>
 </footer>
 
 <script>
@@ -136,6 +147,9 @@ const SPORTS = [
     {n:'Brasileirão', p:'soccer/bra.1'},
     {n:'Eredivisie', p:'soccer/ned.1'},
     {n:'Liga Portugal', p:'soccer/por.1'},
+    {n:'J1 League (Japón)', p:'soccer/jpn.1'},
+    {n:'Chinese Super League (China)', p:'soccer/chn.1'},
+    {n:'K League 1 (Corea del Sur)', p:'soccer/kor.1'},
     // Selecciones nacionales y ventanas internacionales
     {n:'Amistosos FIFA (masculino)', p:'soccer/fifa.friendly'},
     {n:'Amistosos FIFA (femenino)', p:'soccer/fifa.friendly.w'},
@@ -252,12 +266,16 @@ function drawTabs(){
 }
 function drawChips(){
   const ls = state.sport.leagues;
+  const selected = state.league === 'all' ? 'Todas las ligas' : (ls.find(l => l.p === state.league)?.n || 'Ligas y competiciones');
+  $('leagueSummary').textContent = `Ligas y competiciones · ${selected}`;
   if (ls.length < 2){ $('chips').innerHTML = ''; return; }
   $('chips').innerHTML =
     `<button class="chip ${state.league==='all'?'on':''}" data-l="all">Todas las ligas</button>` +
     ls.map(l => `<button class="chip ${state.league===l.p?'on':''}" data-l="${l.p}">${esc(l.n)}</button>`).join('');
   $('chips').querySelectorAll('.chip').forEach(b => b.onclick = () => {
-    state.league = b.dataset.l; drawChips(); load();
+    state.league = b.dataset.l;
+    $('leaguePanel').open = false;
+    drawChips(); load();
   });
 }
 function setDate(d){ d.setHours(12,0,0,0); state.date = d; $('date').value = inputVal(d); load(); }
